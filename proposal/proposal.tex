@@ -30,96 +30,6 @@ on the same device. This capstone proposes a client--server application with a
 centralized music database communicating with many web-based clients allowing a
 rich set of sorting and filtering capabilities.
 
-\section{Requirements}
-
-The program will have the common database/application/client structure. Any
-source written in service of implementation will be licensed under version 3 of
-the GNU General Public License.
-
-\begin{marginfigure}\label{fig:arch}
-  \centering
-  \begin{tikzpicture}[>=latex',font={\sffamily \small}]
-    \def\smbwd{2cm}
-
-    \node (database) at (0,0) [draw, storage,
-    minimum width=\smbwd,
-    minimum height=1cm] {DATABASE};
-
-    \node (application) at (0,-2) [draw, process,
-    minimum width=\smbwd,
-    minimum height=1cm] {APPLICATION};
-
-    \coordinate (point1) at (0,-3.25);
-
-    \node (client) at (0,-4) [draw, terminal,
-    minimum width=\smbwd,
-    minimum height=0.5cm] {CLIENT};
-
-    \draw[->] (database.-45) -- node[right]{READ} (application.45);
-    \draw[->] (application.135) -- node[left]{WRITE} (database.225);
-    \draw[<-] (application) -- node[right]{REQUEST/RESPONSE}(point1);
-    \draw[->] (point1) -- (client.120);
-    \draw[->] (point1) -- (client.90);
-    \draw[->] (point1) -- (client.60);
-  \end{tikzpicture}
-  \caption{A flowchart describing the proposal's architecture.}
-\end{marginfigure}
-
-\subsection{Functional Requirements}
-
-The database will reside on a server and provide a model of the metadata of
-locally stored audio files with which the application layer can interact. The
-database will accept queries and output either a list of values for a particular
-metadata frame or a list of files matching a particular set of metadata
-values. The database will allow the modification of metadata during run-time.
-
-The application layer will reside on a web-server and provide a means of
-communication between the client and the database. The application layer will
-accept queries from the client, forward them to the database, and send the
-response back processed for transport via HTTP\@. The application layer will
-handle hosting and serving the initial load for the client web application, and
-will provide authentication and authorization for various user roles, such as
-only allowing registered users to play and view the database and only
-administrators to modify the metadata. The application layer will ensure that
-any request to change metadata is written both to the database and the actual
-music files.
-
-The client will make heavy use of the miller column visualization technique to
-provide an interface through which a user can easily sort and filter the files
-in the database into a playlist which he or she can then play. The client will
-run on any hardware that can run a traditional web browser, with the latest
-version of Mozilla Firefox being the specified target platform. The client will
-respond gracefully to different sized viewports; i.e.\ the client will not
-attempt to detect the device on which the client is being served and serve an
-appropriate front-end, but instead serve a common client that reacts to changes
-in the size of the viewport.
-
-\subsection{Performance Requirements}
-
-The database must have the ability to sort quickly and efficiently an
-arbitrarily large number of metadata records. To accommodate any number,
-performance should scale linearly as commodity-hardware servers are added to a
-cluster.
-
-The application layer should respond to requests with either raw packets over
-HTTP (for development) or compressed and minimized packets over HTTPS (for
-production). The database and application layers should be capable of handling
-100 clients per server of cost outlined below. More and better hardware should
-allow this number to scale linearly.
-
-As per common general usability guidelines, a client over a reasonably fast
-Internet connection (say, no less than 1 MB-per-second download and upload)
-should expect a complete response from the server within 2 seconds.
-
-\subsection{Cost}
-
-Hardware for a server capable of handling at least 100\,000 metadata records
-should cost no more than 500~USD\@. Free and open-source software will comprise
-the entirety of third-party components such as the database management system.
-
-Any computer capable of running a web browser reasonably well, such as a 50~USD
-Raspberry Pi, should be capable of running the web client.
-
 \section{Background}
 
 The problem of digital asset management, especially as it pertains to large
@@ -146,6 +56,100 @@ Subsonic is a popular client--server media player and another inspiration for
 this proposal~\cite{subsonic}. It offers an easy-to-use web interface connected
 to a server but only provides a few canned sorts, such as Album Artist--Album
 and randomized Genre playlists.
+
+\section{Requirements}
+
+As shown in Fig.~\ref{fig:arch}, the program will have the common
+database/application/client structure. Any source written in service of
+implementation will be licensed under version 3 of the GNU General Public
+License.
+
+\begin{figure}
+  \label{fig:arch}
+  \centering
+  \begin{tikzpicture}[>=latex',font={\sffamily \small}]
+    \def\smbwd{2cm}
+
+    \node (database) at (0,0) [draw, storage,
+    minimum width=\smbwd,
+    minimum height=1cm] {DATABASE};
+
+    \node (application) at (0,-2) [draw, process,
+    minimum width=\smbwd,
+    minimum height=1cm] {APPLICATION};
+
+    \coordinate (point1) at (0,-3.25);
+
+    \node (client) at (0,-4) [draw, terminal,
+    minimum width=\smbwd,
+    minimum height=0.5cm] {CLIENT};
+
+    \draw[->] (database.-45) -- node[right]{READ} (application.45);
+    \draw[->] (application.135) -- node[left]{WRITE} (database.225);
+    \draw[<-] (application) -- node[right]{REQUEST/RESPONSE}(point1);
+    \draw[->] (point1) -- (client.120);
+    \draw[->] (point1) -- (client.90);
+    \draw[->] (point1) -- (client.60);
+  \end{tikzpicture}
+  \caption{A block diagram describing the proposal's architecture.}
+\end{figure}
+
+\subsection{Functional Requirements}
+
+The program will provide a Web interface to an online music database,
+
+% The database will reside on a server and provide a model of the metadata of
+% locally stored audio files with which the application layer can interact. The
+% database will accept queries and output either a list of values for a particular
+% metadata frame or a list of files matching a particular set of metadata
+% values. The database will allow the modification of metadata during run-time.
+
+% The application layer will reside on a web-server and provide a means of
+% communication between the client and the database. The application layer will
+% accept queries from the client, forward them to the database, and send the
+% response back processed for transport via HTTP\@. The application layer will
+% handle hosting and serving the initial load for the client web application, and
+% will provide authentication and authorization for various user roles, such as
+% only allowing registered users to play and view the database and only
+% administrators to modify the metadata. The application layer will ensure that
+% any request to change metadata is written both to the database and the actual
+% music files.
+
+% The client will make heavy use of the miller column visualization technique to
+% provide an interface through which a user can easily sort and filter the files
+% in the database into a playlist which he or she can then play. The client will
+% run on any hardware that can run a traditional web browser, with the latest
+% version of Mozilla Firefox being the specified target platform. The client will
+% respond gracefully to different sized viewports; i.e.\ the client will not
+% attempt to detect the device on which the client is being served and serve an
+% appropriate front-end, but instead serve a common client that reacts to changes
+% in the size of the viewport.
+
+\subsection{Performance Requirements}
+
+The database must have the ability to sort quickly and efficiently an
+arbitrarily large number of metadata records. To accommodate any number,
+performance should scale linearly as commodity-hardware servers are added to a
+cluster.
+
+The application layer should respond to requests with either raw packets over
+HTTP (for development) or compressed and minimized packets over HTTPS (for
+production). The database and application layers should be capable of handling
+100 clients per server of cost outlined below. More and better hardware should
+allow this number to scale linearly.
+
+As per common general usability guidelines, a client over a reasonably fast
+Internet connection (say, no less than 1 MB-per-second download and upload)
+should expect a complete response from the server within 2 seconds.
+
+\subsection{Cost}
+
+Hardware for a server capable of handling at least 100\,000 metadata records
+should cost no more than 500~USD\@. Free and open-source software will comprise
+the entirety of third-party components such as the database management system.
+
+Any computer capable of running a web browser reasonably well, such as a 50~USD
+Raspberry Pi, should be capable of running the web client.
 
 \section{Implementation}
 
