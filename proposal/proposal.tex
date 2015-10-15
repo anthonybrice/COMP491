@@ -9,6 +9,7 @@
 
 \usepackage{flowchart}
 \usetikzlibrary{arrows}
+\usetikzlibrary{positioning}
 
 \usepackage{pgfgantt}
 
@@ -39,7 +40,7 @@ filter. Apple's iTunes for example, easily the most ubiquitous media player,
 allows the user to sort by year but not filter.
 
 Musicbee, a popular third-party media player that serves as the inspiration for
-this proposal, provides the user with up to 6 miller columns with which one can
+this proposal, provides the user with up to 6 Miller columns with which one can
 sort and filter the database~\cite{musicbee}. Unfortunately it is also a
 closed-source application native to Windows only.
 
@@ -60,7 +61,9 @@ and randomized Genre playlists.
 \section{Requirements}
 
 As shown in Fig.~\ref{fig:arch}, the program will have the common
-database/application/client structure. Any source written in service of
+database/application/client architecture. It will provide a Web interface to an
+online music database such that a client will have the ability to create and
+stream dynamic playlists with ease. Any source written in service of
 implementation will be licensed under version 3 of the GNU General Public
 License.
 
@@ -70,88 +73,87 @@ License.
   \begin{tikzpicture}[>=latex',font={\sffamily \small}]
     \def\smbwd{2cm}
 
-    \node (database) at (0,0) [draw, storage,
+    \node (database) at (-4, 0) [align=left] {Standard\\Database\\System\\Interface};
+
+    \node (application) at (0,0) [draw, process,
     minimum width=\smbwd,
-    minimum height=1cm] {DATABASE};
+    minimum height=1cm] {Application};
 
-    \node (application) at (0,-2) [draw, process,
+    \node (client1) at (4,1.5) [draw, terminal,
     minimum width=\smbwd,
-    minimum height=1cm] {APPLICATION};
+    minimum height=0.5cm] {Client $1$};
 
-    \coordinate (point1) at (0,-3.25);
+    \node (client2) at (4,0.5) [draw, terminal, minimum width=\smbwd, minimum
+    height=0.5cm] {Client $2$};
 
-    \node (client) at (0,-4) [draw, terminal,
-    minimum width=\smbwd,
-    minimum height=0.5cm] {CLIENT};
+    \node (elip) at (4,-0.15) {\vdots};
 
-    \draw[->] (database.-45) -- node[right]{READ} (application.45);
-    \draw[->] (application.135) -- node[left]{WRITE} (database.225);
-    \draw[<-] (application) -- node[right]{REQUEST/RESPONSE}(point1);
-    \draw[->] (point1) -- (client.120);
-    \draw[->] (point1) -- (client.90);
-    \draw[->] (point1) -- (client.60);
+    \node (clientn) at (4,-1) [draw, terminal, minimum width=\smbwd, minimum
+    height=0.5cm] {Client $n$};
+
+    \draw [dashed] (-3.3,2) -- (-3.3,-1.5);
+    \draw [dashed] (2,2) node[left] {HTTP} -- (2,-1.5);
+
+    \draw[->] (application) -- node[above] {Read/Write} (database);
+    \draw[<->] (application.10) -- (client1.west);
+    \draw[<->] (application.east) -- (client2.west);
+    \draw[<->] (application.350) -- (clientn.west);
   \end{tikzpicture}
   \caption{A block diagram describing the proposal's architecture.}
 \end{figure}
 
 \subsection{Functional Requirements}
 
-The program will provide a Web interface to an online music database,
+\begin{enumerate}
+\item Database
+  \begin{enumerate}
+  \item Provide a model of locally stored audio files.
+  \item Include in each record all metadata frames defined in the associated
+    file.
+  \item Allow mutation of metadata during run time.
+  \item Given a query, return a list of matching songs.
+  \item Given a query and a specific metadata frame, return a list of values for
+    that query and frame.
+  \end{enumerate}
 
-% The database will reside on a server and provide a model of the metadata of
-% locally stored audio files with which the application layer can interact. The
-% database will accept queries and output either a list of values for a particular
-% metadata frame or a list of files matching a particular set of metadata
-% values. The database will allow the modification of metadata during run-time.
+\item Application
+  \begin{enumerate}
+  \item Provide access to database for many clients.
+  \item Host client interface.
+  \item Manage authentication and authorization.
+  \item Given a request to mutate a metadata frame of a song, ensure mutation is written
+    both to database and file.
+  \end{enumerate}
 
-% The application layer will reside on a web-server and provide a means of
-% communication between the client and the database. The application layer will
-% accept queries from the client, forward them to the database, and send the
-% response back processed for transport via HTTP\@. The application layer will
-% handle hosting and serving the initial load for the client web application, and
-% will provide authentication and authorization for various user roles, such as
-% only allowing registered users to play and view the database and only
-% administrators to modify the metadata. The application layer will ensure that
-% any request to change metadata is written both to the database and the actual
-% music files.
-
-% The client will make heavy use of the miller column visualization technique to
-% provide an interface through which a user can easily sort and filter the files
-% in the database into a playlist which he or she can then play. The client will
-% run on any hardware that can run a traditional web browser, with the latest
-% version of Mozilla Firefox being the specified target platform. The client will
-% respond gracefully to different sized viewports; i.e.\ the client will not
-% attempt to detect the device on which the client is being served and serve an
-% appropriate front-end, but instead serve a common client that reacts to changes
-% in the size of the viewport.
+\item Client
+  \begin{enumerate}
+  \item Provide Miller column--browser interface to database.
+  \item Manage display for viewports of varying size.
+  \item Provide interface through which authorized users may update any metadata
+    frame of a song or collection of songs.
+  \item Stream selected playlist to connected audio device.
+  \end{enumerate}
+\end{enumerate}
 
 \subsection{Performance Requirements}
 
-The database must have the ability to sort quickly and efficiently an
-arbitrarily large number of metadata records. To accommodate any number,
-performance should scale linearly as commodity-hardware servers are added to a
-cluster.
-
-The application layer should respond to requests with either raw packets over
-HTTP (for development) or compressed and minimized packets over HTTPS (for
-production). The database and application layers should be capable of handling
-100 clients per server of cost outlined below. More and better hardware should
-allow this number to scale linearly.
-
-As per common general usability guidelines, a client over a reasonably fast
-Internet connection (say, no less than 1 MB-per-second download and upload)
-should expect a complete response from the server within 2 seconds.
+\begin{enumerate}
+\item Query performance must scale linearly as commodity hardware is added to
+  database cluster.
+\item Client--server round trip should take no longer then 2 seconds.
+\end{enumerate}
 
 \subsection{Cost}
 
-Hardware for a server capable of handling at least 100\,000 metadata records
-should cost no more than 500~USD\@. Free and open-source software will comprise
-the entirety of third-party components such as the database management system.
+\begin{enumerate}
+\item Hardware for a server capable of handling a large personal music library
+  (less than 100\,000 metadata records) should cost no more than 500~USD.
+\item Any computer capable of running a web browser reasonably well, such as a 50~USD
+  Raspberry Pi, should be capable of running the Web client.
+\item I estimate development should take 15 hours per week over 12 weeks, or 180 hours.
+\end{enumerate}
 
-Any computer capable of running a web browser reasonably well, such as a 50~USD
-Raspberry Pi, should be capable of running the web client.
-
-\section{Implementation}
+\section{Target Implementation}
 
 The choice between a traditional SQL or document-oriented database is
 non-obvious and will likely be determined through experimentation. A
@@ -174,17 +176,39 @@ application layer should take take queries from the client in the database's
 native language, pass them on to the client, and serve up the results. I will
 experiment with allowing the application to keep cursors open to allow the
 streaming of result sets in an asynchronous way (like how Gchat makes
-asynchronous requests for one's chat history as one scrolls a chat window up),
-but I do not know well this will scale since in the worst case it requires an
-open database connection for every client.
+asynchronous requests for one's chat history as one scrolls a chat window
+upwards), but I do not know well this will scale since in the worst case it
+requires an open database connection for every client.
+
+\begin{marginfigure}[-6cm]
+  \centering
+  \includegraphics[height=7cm]{iphone1.png}
+  \caption{Target GUI on small screen. The right menu icon allows the user to
+    choose the metadata frame for which values are listed.}
+  \label{fig:phone1}
+\end{marginfigure}
 
 The client will be served in standard HTML5/CSS/ECMAScript. It will be a
 single-page application making heavy use of AJAX requests to deliver content.  I
 would like to use a new functional-reactive DSL called Elm, which provides a
-clean, Haskell-like syntax for defining such applications \cite{czaplicki}. I
+clean, Haskell-like syntax for defining such applications~\cite{czaplicki}. I
 believe the modularity inherent to its pure and immutable design and the
-performance benefits from its abstract ``virtual DOM'' (i.e.\ scene graph)
+performance benefits from its abstract ``virtual DOM'' (i.e., scene graph)
 implementation will be quite useful to my front-end.
+
+The GUI will gracefully scale to different-sized viewports, presenting Miller
+columns of values for a particular metadata frame. A selected value will filter
+the possible values of the next column, finally presenting the user with a list
+of songs matching the selected frame values. (See Figs.~\ref{fig:phone1}
+and~\ref{fig:browser1}.)
+
+\begin{figure}
+  \centering
+  \includegraphics[height=7cm]{browser1.png}
+  \label{fig:browser1}
+  \caption{Target GUI on large viewport. The combobox at the top of each column
+    allows the user to select a metadata frame.}
+\end{figure}
 
 \section{Project Plan}
 
@@ -199,7 +223,7 @@ implementation will be quite useful to my front-end.
     \gantttitle{Spring 2016}{15} \\
     \gantttitlelist{1,...,15}{1} \\
     \ganttbar{Dev. DB}{1}{3} \\
-    \ganttlinkedbar{Dev. App. Layer}{2}{9} \\
+    \ganttlinkedbar{Dev. App. Layer}{2}{10} \\
     \ganttmilestone{Feature Complete}{7} \ganttnewline[]
     \ganttlinkedbar{Dev. Client}{4}{12} \\
     \ganttmilestone{Finalize API}{10} \ganttnewline[]
@@ -208,13 +232,14 @@ implementation will be quite useful to my front-end.
     \ganttlink{elem3}{elem4}
   \end{ganttchart}
   \caption{A Gantt chart describing the proposal's schedule.}
+  \label{fig:gantt}
 \end{figure}
 
 \noindent
-I have broken the project into four distinct phases with two milestones
-throughout. The phases divide into three development phases---the database,
-application, and client components---and a final phase for presentation
-preparations.
+As shown in Fig.~\ref{fig:gantt}, I have broken the project into four distinct
+phases with two milestones throughout. The phases divide into three development
+phases---the database, application, and client components---and a final phase
+for presentation preparations.
 
 The database development phase should move quickly as it only entails a few,
 relatively simple items: configuring and spinning up a database, writing a
@@ -223,9 +248,8 @@ writing documentation for configuration and the use of the import program.
 
 Next started will be the application phase, and a few weeks into that I should
 be ready to begin work on the client as well. Most work on both these layers
-will be done in tandem. I expect to require a clear understanding of the
-client's needs in order to offer the most useful API from the server-side
-application.
+will be done in tandem since to offer the most useful API I expect to require a
+clear understanding of the client's needs.
 
 By week 7 I plan to have a feature-complete rough draft of my project. This may
 seem early, but I expect the application to perform rather poorly at this point
